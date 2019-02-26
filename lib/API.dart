@@ -13,16 +13,17 @@ class Api {
       'query': query,
     });
 
-    List<Repo> res = await _getJson(uri);
-    if (res == null) {
+    final jsonResponse = await _getJson(uri);
+    if (jsonResponse == null) {
       return null;
     }
-
-    if (res == null) {
+    if (jsonResponse['errors'] != null) {
+      return null;
+    }
+    if (jsonResponse['title'] == null) {
       return List();
     }
-
-    return Repo.mapJSONStringToList(res);
+    return Repo.mapJSONStringToList(jsonResponse['title']);
   }
 
   static Future<List<Repo>> getTrendingRepositories() async {
@@ -30,32 +31,29 @@ class Api {
       'query': "a"
     });
 
-   List<Repo> res = await _getJson(uri);
-    if (res == null) {
+    final jsonResponse = await _getJson(uri);
+    if (jsonResponse == null) {
       return null;
     }
-    if (res == null) {
+    if (jsonResponse['errors'] != null) {
+      return null;
+    }
+    if (jsonResponse['title'] == null) {
       return List();
     }
-
-    return Repo.mapJSONStringToList(res);
+    return Repo.mapJSONStringToList(jsonResponse['title']);
   }
 
-  static Future<List<Repo>>_getJson(Uri uri) async {
+  static Future<Map<String, dynamic>> _getJson(Uri uri) async {
     try {
       final httpRequest = await _httpClient.getUrl(uri);
       final httpResponse = await httpRequest.close();
       if (httpResponse.statusCode != HttpStatus.OK) {
         return null;
       }
+
       final responseBody = await httpResponse.transform(utf8.decoder).join();
-      final jsonbody = json.decode(responseBody);
-      List<Repo> city = jsonbody.map<Repo>((element){
-        String title = element['title'];
-        String woeid = element['woeid'].toString();
-        return Repo(_url,title,woeid);
-      }).toList();
-      return city;
+      return json.decode(responseBody);
     } on Exception catch (e) {
       print('$e');
       return null;
